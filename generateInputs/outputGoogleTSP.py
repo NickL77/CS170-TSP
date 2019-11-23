@@ -21,6 +21,7 @@ node_names = f.readline().strip('\n').split(' ')
 house_names = f.readline().strip('\n').split(' ')
 adjusted_node_names = node_names[:]
 start_node = f.readline()
+start_num = int(start_node[4:])
 
 for _ in range(num_nodes):
     row = f.readline().split(' ')
@@ -35,25 +36,27 @@ for i in range(num_nodes):
             adj_mat[i][j] = sys.maxsize
         else:
             adj_mat[i][j] = int(float(adj_mat[i][j]) * 10000)
-
+'''
 house_numbers = []
 for h in house_names[::-1]:
     house_numbers.append(int(h[4:]))
 non_house_numbers = []
 
-
 for i in range(num_nodes):
     if i+1 not in house_numbers:
-        non_house_numbers.append(i)
+        if i == start_num:
+            print('not in:', i)
+        else:
+            non_house_numbers.append(i)
 non_house_numbers.sort(reverse=True)
+print(non_house_numbers)
 
 for i in non_house_numbers:
     adjusted_node_names.pop(i) 
     adj_mat.pop(i)
     for row in adj_mat:
         row.pop(i)
-
-print(adjusted_node_names)
+'''
 
 def print_solution(manager, routing, assignment):
     """Prints assignment on console."""
@@ -109,9 +112,31 @@ assignment = routing.SolveWithParameters(search_parameters)
 if assignment:
     path = print_solution(manager, routing, assignment)
     path_ls = path.split(' ')
+    node_order = []
     for p in path_ls:
         if p.isdigit():
-            print(adjusted_node_names[int(p)])
+            node_order.append(int(p))
+            #print(p, adjusted_node_names[int(p)])
+    while node_order[0] != start_num:
+        node_order.append(node_order.pop(0))
+    node_order.append(node_order[0])
+    print(node_order)
+    outfile = str(num_nodes) + '.out'
+    
+    f = open(outfile, 'w')
+    
+    for i in range(len(node_order)):
+        f.write('node' + str(node_order[i]))
+        if i + 1 < node_order:
+            f.write(' ')
+    f.write('\n')
+    f.write(str(num_houses) + '\n')
+    
+    for n in house_names:
+        f.write(n + ' ' + n + '\n')
+
+    f.close()
+
 
 
 
