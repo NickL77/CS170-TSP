@@ -37,10 +37,10 @@ def truncate(n, d):
 
 if __name__ == "__main__":
     
-    V = 200 # number of nodes
+    V = 50 # number of nodes
     D = 2 # dimensionality
-    S = 0.9 # sparsity
-    num_TAs = 87 # number of houses to visit
+    S = 0.7 # sparsity
+    num_TAs = 19 # number of houses to visit
   
     # Randomly choose TA houses
     house_list = []

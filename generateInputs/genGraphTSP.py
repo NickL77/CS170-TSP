@@ -72,8 +72,7 @@ if __name__ == "__main__":
 
     # Initialize data for solver
     data = {}
-    print(adj_mat)
-    data['distance_matrix'] = adj_mat.tolist()
+    #data['distance_matrix'] = adj_mat.tolist()
     '''
     data['distance_matrix'] = [
         [0, 2451, 713, 1018, 1631, 1374, 2408, 213, 2571, 875, 1420, 2145, 1972],
@@ -91,6 +90,12 @@ if __name__ == "__main__":
         [1972, 579, 1260, 987, 371, 999, 701, 2099, 600, 1162, 1200, 504, 0],
     ]
     '''
+    data['distance_matrix'] = [
+        [0, 1, 0, 0],
+        [1, 0, 1, 0],
+        [0, 1, 0, 1],
+        [0, 0, 1, 0],
+    ]
     data['num_vehicles'] = 1
     data['depot'] = 0
     
