@@ -17,19 +17,15 @@ def check_sym(adj):
 def check_triangle(adj): 
     matrix = np.matrix(adj)
     G = nx.from_numpy_matrix(matrix) 
-    # print(G.edges(data=True))
-    for e in list(G.edges(data=True)): 
-        print(e)
-        u, v, d = e
-        minDist = nx.shortest_path(G, u, v) 
-        assert d < minDist
+    shortest = dict(nx.floyd_warshall(G))
+    for u, v, datadict in G.edges(data=True):
+        val = datadict['weight']
+        if not isinstance(val, str) and abs(shortest[u][v] - datadict['weight']) >= 0.00001:
+            assert False
     print("Adjacency matrix satisfies triangle inequality")
-    # for i in range(len(adj)): 
-        # for j in range(len(adj): 
 
 
 def gen_adj_matrix(V, D, S):
-
     positions = np.random.rand(V, D)
     differences = positions[:, None, :] - positions[None, :, :]
     distances = np.sqrt(np.sum(differences**2, axis=-1)) # euclidean
