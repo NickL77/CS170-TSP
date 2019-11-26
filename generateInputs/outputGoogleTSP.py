@@ -10,7 +10,7 @@ import math
 import sys
 
 
-filename = '50.in'
+filename = '200.in'
 adj_mat = []
 
 f = open(filename, 'r')
@@ -126,7 +126,7 @@ if assignment:
     f = open(outfile, 'w')
     
     for i in range(len(node_order)):
-        f.write('node' + str(node_order[i]))
+        f.write('node' + str(node_order[i] + 1))
         if i + 1 < node_order:
             f.write(' ')
     f.write('\n')
