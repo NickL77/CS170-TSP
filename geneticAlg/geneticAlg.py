@@ -1,3 +1,7 @@
+import networkx as nx
+import numpy as np
+import random
+
 class graphSolver:
 
     def __init__(self, node_names, house_names, start, adj_mat):
@@ -6,10 +10,25 @@ class graphSolver:
         self.house_names = house_names
         self.start = start
         self.adj_mat = adj_mat
+        self.G = nx.Graph()
         
+        # Dictionary used to go from name to index number
+        # The reverse can be done by indexing self.node_names
         self.node_indices = {}
         for i in range(len(node_names)):
             self.node_indices[self.node_names[i]] = i
+
+        # Convert adjacency matrix to nx graph
+        # TODO: currently adding edges one-by-one. Not sure how to feed in and adjacency
+        # matrix that has 'x' elements that means no path.
+        # TODO: do we still need the adjacency matrix? Currently converting all weight
+        # elements to floats, but potentially can remove
+        for i in range(len(adj_mat)):
+            for j in range(len(adj_mat)):
+                if adj_mat[i][j] != 'x':
+                    adj_mat[i][j] = float(adj_mat[i][j])
+                    if i > j:
+                        self.G.add_edge(self.node_names[i], self.node_names[j], weight=adj_mat[i][j])
 
     def fitness(self, path):
         """
@@ -28,13 +47,11 @@ class graphSolver:
         energy = 0
 
         for i in range(len(path) - 1):
-            node1 = self.node_indices[path[i]]
-            node2 = self.node_indices[path[i + 1]]
-            if type(self.adj_mat[node1][node2]) == type(''):
+            if self.G.has_edge(path[i], path[i + 1]):
+                energy += self.G[path[i]][path[i + 1]]['weight']
+            else:
                 return -1
-            energy += float(self.adj_mat[node1][node2])
-
-        print(energy)
+        
         '''
         for h in self.house_names:
             # find the shortest length from h to a node in path and add it to energy
@@ -42,6 +59,29 @@ class graphSolver:
         '''
 
         raise NotImplementedError
+
+    # TODO: Nick working on for generating intial population of graphs
+    #def generate_random_cycle():
+
+    # TODO: @Steven @Jeffrey
+    def shortest_path_to_cyle(self, path, node):
+        """
+        Calculate shortest distance from a node to the closest node on the path
+
+        Parameters
+        ----------
+        path: list of nodes in the path taken by the car
+        node: the house of a TA
+
+        Return
+        ------
+        dist: float weight of the smallest cost of travelling from a node on the
+        path to the node
+        """
+
+
+        raise NotImplementedError
+
         
 def readInput(filename):
     """
@@ -83,7 +123,8 @@ def main():
 
     temp_path = ['1', '3', '5', '1']
 
-    solver.fitness(temp_path)
+    print(solver.fitness(temp_path))
+    
     '''
     for row in adj_mat:
         print(row)
