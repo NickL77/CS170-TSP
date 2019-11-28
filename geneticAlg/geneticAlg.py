@@ -57,11 +57,42 @@ class graphSolver:
             # find the shortest length from h to a node in path and add it to energy
             continue
         '''
-
         raise NotImplementedError
 
-    # TODO: Nick working on for generating intial population of graphs
-    #def generate_random_cycle():
+    def generate_random_cycle(self):
+        """
+        Generate a valid random cycle within G
+
+        Return
+        ------
+        rand_path: random cycle for vehicle to travel. Length of path correlates to
+        a normally generated random number
+        """
+
+        # Normal Distribution Parameters
+        mu = len(self.node_names) / 2
+        std_dev = len(self.node_names) / 10
+        
+        # Generate a list of random nodes to visit
+        node_names_copy = self.node_names[:]
+        random.shuffle(node_names_copy)
+
+        psuedo_path = [self.start]
+        for _ in range(int(random.gauss(mu, std_dev))):
+            psuedo_path.append(node_names_copy.pop())
+        psuedo_path.append(self.start)
+
+        # Connect random paths with shortest paths
+        rand_path = [self.start]
+        for i in range(len(psuedo_path) - 1):
+            node1 = psuedo_path[i]
+            node2 = psuedo_path[i + 1]
+            
+            connection = nx.shortest_path(self.G, source=node1, target=node2)
+            rand_path.extend(connection[1:])
+
+        return rand_path
+
 
     # TODO: @Steven @Jeffrey
     def shortest_path_to_cyle(self, path, node):
@@ -82,7 +113,21 @@ class graphSolver:
 
         raise NotImplementedError
 
-        
+def main():
+    
+    node_names, house_names, start, adj_mat = readInput('../inputs/99_50.in')
+    solver = graphSolver(node_names, house_names, start, adj_mat)
+
+    temp_path = ['1', '3', '5', '1']
+
+    solver.generate_random_cycle()
+    #print(solver.fitness(temp_path))
+    
+    '''
+    for row in adj_mat:
+        print(row)
+    '''
+
 def readInput(filename):
     """
     Read from an input file
@@ -105,7 +150,7 @@ def readInput(filename):
     num_houses = int(f.readline().strip())
     node_names = f.readline().strip().split(' ')
     house_names = f.readline().strip().split(' ')
-    start_node = f.readline()
+    start_node = f.readline().strip()
 
     adj_mat = []
 
@@ -115,20 +160,6 @@ def readInput(filename):
     f.close()
 
     return node_names, house_names, start_node, adj_mat
-
-def main():
-    
-    node_names, house_names, start, adj_mat = readInput('../inputs/99_50.in')
-    solver = graphSolver(node_names, house_names, start, adj_mat)
-
-    temp_path = ['1', '3', '5', '1']
-
-    print(solver.fitness(temp_path))
-    
-    '''
-    for row in adj_mat:
-        print(row)
-    '''
 
 if __name__  == "__main__":
     main()
