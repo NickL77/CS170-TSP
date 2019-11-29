@@ -33,8 +33,8 @@ def gen_adj_matrix(V, D, S):
 
     for i in range(V):
         for j in range(V):
-            distances[i][j] = truncate(distances[i][j] * 100, 5)
-            if random.random() < S:
+            distances[i][j] = truncate(distances[i][j] * 100000, 5)
+            if random.random() < S or i == j:
                 distances[i][j] = 'x'
             if i > j:
                 distances[i][j] = distances [j][i]
@@ -49,8 +49,8 @@ if __name__ == "__main__":
     
     V = 100 # number of nodes
     D = 2 # dimensionality
-    S = 0.7 # sparsity
-    num_TAs = 93 # number of houses to visit
+    S = 0.6 # sparsity
+    num_TAs = 94 # number of houses to visit
   
     # Randomly choose TA houses
     house_list = []
