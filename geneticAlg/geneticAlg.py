@@ -7,6 +7,10 @@ class graphSolver:
 
     def __init__(self, node_names, house_names, start, adj_mat):
 
+        # Genetic Algo Hyperparameters
+        self.population_size = 100
+        self.mutation_rate = 0.03
+
         self.node_names = node_names
         self.house_names = house_names
         self.start = start
@@ -53,12 +57,11 @@ class graphSolver:
             else:
                 return -1
 
-        '''
         for h in self.house_names:
             # find the shortest length from h to a node in path and add it to energy
-            continue
-        '''
-        raise NotImplementedError
+            energy += self.shortest_path_to_cycle(path, h)
+
+        return energy
 
     def generate_random_cycle(self):
         """
@@ -94,9 +97,7 @@ class graphSolver:
 
         return rand_path
 
-
-    # TODO: @Steven @Jeffrey
-    def shortest_path_to_cyle(self, path, node):
+    def shortest_path_to_cycle(self, path, node):
         """
         Calculate shortest distance from a TA's house to the closest dropoff point on the path the vehicle takes
 
@@ -125,20 +126,21 @@ class graphSolver:
                 foundPath = True
             elif curr_node not in visited:
                 visited.add(curr_node)
-                for child in list(G.neighbors()):
-                    cost = final_cost + G[curr_node][child]['weight']
+                for child in list(self.G.neighbors(curr_node)):
+                    cost = final_cost + self.G[curr_node][child]['weight']
                     fringe.update(child, cost)
         return final_cost
 
 def main():
 
-    node_names, house_names, start, adj_mat = readInput('../inputs/99_50.in')
+    #node_names, house_names, start, adj_mat = readInput('../inputs/99_50.in')
+    #node_names, house_names, start, adj_mat = readInput('../inputs/99_200.in')
+    
     solver = graphSolver(node_names, house_names, start, adj_mat)
+    #temp_path = ['1', '3', '5', '1']
+    temp_path = solver.generate_random_cycle()
 
-    temp_path = ['1', '3', '5', '1']
-
-    solver.generate_random_cycle()
-    #print(solver.fitness(temp_path))
+    print(solver.fitness(temp_path))
 
     '''
     for row in adj_mat:

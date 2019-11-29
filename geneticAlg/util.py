@@ -1,5 +1,7 @@
-import heappq
+import heapq
+
 #adapted from CS188 project
+
 class PriorityQueue:
     """
       Implements a priority queue data structure. Each inserted item
