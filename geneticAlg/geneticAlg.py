@@ -11,7 +11,7 @@ class graphSolver:
         self.default_iterations = 100
         self.population_size = 100
         self.elite_size = int(self.population_size * 0.05)
-        self.mutation_rate = 0.03
+        self.mutation_rate = 0.2
 
         self.node_names = node_names
         self.house_names = house_names
@@ -62,7 +62,7 @@ class graphSolver:
             curr_population.append((c, f))
         
         curr_population = sorted(curr_population, key=lambda x: x[1])
-        print(str(int(curr_population[0][1])) + ' ' + str(int(curr_population[10][1])) + ' ' + str(int(curr_population[25][1])))
+        #print(str(int(curr_population[0][1])) + ' ' + str(int(curr_population[10][1])) + ' ' + str(int(curr_population[25][1])))
 
         def select_parents():
             s1 = random.uniform(0, total)
@@ -109,6 +109,11 @@ class graphSolver:
         child1 = path1[:i1] + path2[i2:]
         child2 = path2[:i2] + path1[i1:]
 
+        if random.random() < self.mutation_rate:
+            child1 = self.mutate(child1)
+        if random.random() < self.mutation_rate:
+            child2 = self.mutate(child2)
+
         return [child1, child2]
 
 
@@ -130,16 +135,24 @@ class graphSolver:
 
         for i in range(len(path) - 1):
             if self.G.has_edge(path[i], path[i + 1]):
-                energy += self.G[path[i]][path[i + 1]]['weight'] * 2 / 3
+                energy += self.G[path[i]][path[i + 1]]['weight'] * 2.0 / 3.0
             else:
                 return -1
 
 
         for h in self.house_names:
             # find the shortest length from h to a node in path and add it to energy
-            energy += self.shortest_path_to_cycle(path, h)
+            e, _ = self.shortest_path_to_cycle(path, h)
+            energy += e
 
         return energy
+
+    def get_pedestrian_walks(self, path):
+        dropoff_locations = {}
+        for h in self.house_names:
+            _, n = self.shortest_path_to_cycle(path, h)
+            dropoff_locations[n] = dropoff_locations.get(n, []) + [h]
+        return dropoff_locations
 
     def generate_random_cycle(self):
         """
@@ -175,6 +188,20 @@ class graphSolver:
 
         return rand_path
 
+    def mutate(self, path):
+        new_visit = int(random.uniform(0, len(self.node_names)))
+        new_visit = self.node_names[new_visit]
+        cut = int(random.uniform(0, len(path) - 1))
+
+        if new_visit == path[cut] or new_visit == path[cut + 1]:
+            return path
+        
+        path1 = nx.shortest_path(self.G, source=path[cut], target=new_visit)
+        path2 = nx.shortest_path(self.G, source=new_visit, target=path[cut + 1])
+
+        new_path = path[:cut] + path1 + path2[1:-1] + path[cut + 1:]
+        return new_path
+
     def shortest_path_to_cycle(self, path, node):
         """
         Calculate shortest distance from a TA's house to the closest dropoff point on the path the vehicle takes
@@ -207,7 +234,7 @@ class graphSolver:
                 for child in list(self.G.neighbors(curr_node)):
                     cost = final_cost + self.G[curr_node][child]['weight']
                     fringe.update(child, cost)
-        return final_cost
+        return final_cost, goal
 
     def get_initial_population(self):
         initial_population = []
@@ -217,23 +244,54 @@ class graphSolver:
 
 def main():
 
-    #node_names, house_names, start, adj_mat = readInput('../inputs/7_50.in')
-    node_names, house_names, start, adj_mat = readInput('../inputs/7_100.in')
+    node_names, house_names, start, adj_mat = readInput('../inputs/7_50.in')
+    #node_names, house_names, start, adj_mat = readInput('../inputs/7_100.in')
     #node_names, house_names, start, adj_mat = readInput('../inputs/7_200.in')
     
-    solver = graphSolver(node_names, house_names, start, adj_mat)
-    result = solver.run_evolution(10)
-    print(result)
-    print(solver.fitness(result))
-    #temp_path = ['1', '3', '5', '1']
-    #temp_path = solver.generate_random_cycle()
 
-    #print(solver.fitness(temp_path))
+    solver = graphSolver(node_names, house_names, start, adj_mat)
+    #result_path = solver.run_evolution(100)
+    #print(result_path)
+    
+    best_path = None
+    best_score = 900
+
+    for _ in range(10):
+        result_path = solver.run_evolution(20)
+        print(result_path)
+        print(solver.fitness(result_path))
+        if solver.fitness(result_path) < best_score:
+            best_score = solver.fitness(result_path)
+            best_path = result_path
+    result_path = best_path
+    result_dropoff = solver.get_pedestrian_walks(result_path)
+
+    #writeOutput('../outputs/7_100.out', result_path, result_dropoff)
 
     '''
     for row in adj_mat:
         print(row)
     '''
+
+def writeOutput(filename, path, dropoff):
+    f = open(filename, 'w')
+
+    for i in range(len(path)):
+        f.write(path[i])
+        if i + 1 < len(path):
+            f.write(' ')
+    f.write('\n')
+
+    f.write(str(len(dropoff)) + '\n')
+
+    for k in dropoff:
+        f.write(k + ' ')
+        for i in range(len(dropoff[k])):
+            f.write(dropoff[k][i])
+            if i + 1 < len(dropoff[k]):
+                f.write(' ')
+        f.write('\n')
+
 
 def readInput(filename):
     """
