@@ -1,6 +1,7 @@
 import networkx as nx
 import numpy as np
 import random
+import util
 
 class graphSolver:
 
@@ -11,7 +12,7 @@ class graphSolver:
         self.start = start
         self.adj_mat = adj_mat
         self.G = nx.Graph()
-        
+
         # Dictionary used to go from name to index number
         # The reverse can be done by indexing self.node_names
         self.node_indices = {}
@@ -51,7 +52,7 @@ class graphSolver:
                 energy += self.G[path[i]][path[i + 1]]['weight']
             else:
                 return -1
-        
+
         '''
         for h in self.house_names:
             # find the shortest length from h to a node in path and add it to energy
@@ -72,7 +73,7 @@ class graphSolver:
         # Normal Distribution Parameters
         mu = len(self.node_names) / 2
         std_dev = len(self.node_names) / 10
-        
+
         # Generate a list of random nodes to visit
         node_names_copy = self.node_names[:]
         random.shuffle(node_names_copy)
@@ -87,7 +88,7 @@ class graphSolver:
         for i in range(len(psuedo_path) - 1):
             node1 = psuedo_path[i]
             node2 = psuedo_path[i + 1]
-            
+
             connection = nx.shortest_path(self.G, source=node1, target=node2)
             rand_path.extend(connection[1:])
 
@@ -97,7 +98,7 @@ class graphSolver:
     # TODO: @Steven @Jeffrey
     def shortest_path_to_cyle(self, path, node):
         """
-        Calculate shortest distance from a node to the closest node on the path
+        Calculate shortest distance from a TA's house to the closest dropoff point on the path the vehicle takes
 
         Parameters
         ----------
@@ -107,14 +108,30 @@ class graphSolver:
         Return
         ------
         dist: float weight of the smallest cost of travelling from a node on the
-        path to the node
+        path to the input node
         """
-
-
-        raise NotImplementedError
+        visited = set()
+        fringe = util.PriorityQueue()
+        goal = None
+        fringe.push(node, 0)
+        foundPath = False
+        final_cost = float('inf')
+        while not foundPath:
+            if fringe.isEmpty():
+                return None
+            curr_node, final_cost = fringe.pop()
+            if curr_node in path:
+                goal = curr_node
+                foundPath = True
+            elif curr_node not in visited:
+                visited.add(curr_node)
+                for child in list(G.neighbors()):
+                    cost = final_cost + G[curr_node][child]['weight']
+                    fringe.update(child, cost)
+        return final_cost
 
 def main():
-    
+
     node_names, house_names, start, adj_mat = readInput('../inputs/99_50.in')
     solver = graphSolver(node_names, house_names, start, adj_mat)
 
@@ -122,7 +139,7 @@ def main():
 
     solver.generate_random_cycle()
     #print(solver.fitness(temp_path))
-    
+
     '''
     for row in adj_mat:
         print(row)
@@ -145,7 +162,7 @@ def readInput(filename):
     """
 
     f = open(filename, 'r')
-    
+
     num_nodes = int(f.readline().strip())
     num_houses = int(f.readline().strip())
     node_names = f.readline().strip().split(' ')
