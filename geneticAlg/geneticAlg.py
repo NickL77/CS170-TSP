@@ -8,7 +8,9 @@ class graphSolver:
     def __init__(self, node_names, house_names, start, adj_mat):
 
         # Genetic Algo Hyperparameters
+        self.default_iterations = 100
         self.population_size = 100
+        self.elite_size = int(self.population_size * 0.05)
         self.mutation_rate = 0.03
 
         self.node_names = node_names
@@ -35,6 +37,81 @@ class graphSolver:
                     if i > j:
                         self.G.add_edge(self.node_names[i], self.node_names[j], weight=adj_mat[i][j])
 
+        '''
+        self.starting_population = self.get_initial_population()
+        population = self.starting_population
+        for _ in range(100):
+            population = self.next_generation(population)
+        #self.next_generation(self.starting_population)
+        '''
+
+    def run_evolution(self, iterations=100):
+        population = self.get_initial_population()
+        for _ in range(iterations):
+            population = self.next_generation(population)
+        return population[0]
+
+    def next_generation(self, population):
+        
+        curr_population = []
+        next_population = []
+        total = 0
+        for c in population:
+            f = self.fitness(c)
+            total += 1/f
+            curr_population.append((c, f))
+        
+        curr_population = sorted(curr_population, key=lambda x: x[1])
+        print(str(int(curr_population[0][1])) + ' ' + str(int(curr_population[10][1])) + ' ' + str(int(curr_population[25][1])))
+
+        def select_parents():
+            s1 = random.uniform(0, total)
+            s2 = random.uniform(0, total)
+            parent1, parent2 = None, None
+            curr = 0
+            for p in curr_population:
+                if parent1 and parent2:
+                    break
+                curr += 1/p[1]
+                if not parent1 and curr > s1:
+                    parent1 = p
+                if not parent2 and curr > s2:
+                    parent2 = p
+            return parent1, parent2
+
+        for i in range(self.elite_size):
+            next_population.append(curr_population[i][0])
+
+        while len(next_population) < self.population_size:
+            p1, p2 = None, None
+            while p1 == p2:
+                p1, p2 = select_parents()
+            c1, c2 = self.breed(p1[0], p2[0])
+            if c1 == None:
+                continue
+            next_population.extend([c1, c2])
+
+        return next_population
+
+    def breed(self, path1, path2):
+        
+        s = set(path1)
+        intersection = [v for v in path2 if v in s and v != self.start]
+       
+        if len(intersection) == 0:
+            return None, None
+
+        node = random.choice(intersection)
+
+        i1 = path1.index(node)
+        i2 = path2.index(node)
+
+        child1 = path1[:i1] + path2[i2:]
+        child2 = path2[:i2] + path1[i1:]
+
+        return [child1, child2]
+
+
     def fitness(self, path):
         """
         Calculate fitness or score of a path to be maximized (inverse of the energy
@@ -53,9 +130,10 @@ class graphSolver:
 
         for i in range(len(path) - 1):
             if self.G.has_edge(path[i], path[i + 1]):
-                energy += self.G[path[i]][path[i + 1]]['weight']
+                energy += self.G[path[i]][path[i + 1]]['weight'] * 2 / 3
             else:
                 return -1
+
 
         for h in self.house_names:
             # find the shortest length from h to a node in path and add it to energy
@@ -131,16 +209,26 @@ class graphSolver:
                     fringe.update(child, cost)
         return final_cost
 
+    def get_initial_population(self):
+        initial_population = []
+        for _ in range(self.population_size):
+            initial_population.append(self.generate_random_cycle())
+        return initial_population
+
 def main():
 
-    #node_names, house_names, start, adj_mat = readInput('../inputs/99_50.in')
-    #node_names, house_names, start, adj_mat = readInput('../inputs/99_200.in')
+    #node_names, house_names, start, adj_mat = readInput('../inputs/7_50.in')
+    node_names, house_names, start, adj_mat = readInput('../inputs/7_100.in')
+    #node_names, house_names, start, adj_mat = readInput('../inputs/7_200.in')
     
     solver = graphSolver(node_names, house_names, start, adj_mat)
+    result = solver.run_evolution(10)
+    print(result)
+    print(solver.fitness(result))
     #temp_path = ['1', '3', '5', '1']
-    temp_path = solver.generate_random_cycle()
+    #temp_path = solver.generate_random_cycle()
 
-    print(solver.fitness(temp_path))
+    #print(solver.fitness(temp_path))
 
     '''
     for row in adj_mat:
