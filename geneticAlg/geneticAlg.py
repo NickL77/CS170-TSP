@@ -2,6 +2,7 @@ import networkx as nx
 import numpy as np
 import random
 import util
+import sys
 
 class graphSolver:
 
@@ -10,8 +11,8 @@ class graphSolver:
         # Genetic Algo Hyperparameters
         self.default_iterations = 100
         self.population_size = 100
-        self.elite_size = int(self.population_size * 0.05)
-        self.mutation_rate = 0.2
+        self.elite_size = int(self.population_size * 0.01)
+        self.mutation_rate = 0.05
 
         self.node_names = node_names
         self.house_names = house_names
@@ -45,8 +46,9 @@ class graphSolver:
         #self.next_generation(self.starting_population)
         '''
 
-    def run_evolution(self, iterations=100):
-        population = self.get_initial_population()
+    def run_evolution(self, iterations=100, population=None):
+        if population == None:
+            population = self.get_initial_population()
         for _ in range(iterations):
             population = self.next_generation(population)
         return population[0]
@@ -62,7 +64,8 @@ class graphSolver:
             curr_population.append((c, f))
         
         curr_population = sorted(curr_population, key=lambda x: x[1])
-        #print(str(int(curr_population[0][1])) + ' ' + str(int(curr_population[10][1])) + ' ' + str(int(curr_population[25][1])))
+        #print(str(int(curr_population[0][1])))
+        print(str(int(curr_population[0][1])) + ' ' + str(int(curr_population[10][1])) + ' ' + str(int(curr_population[25][1])))
 
         def select_parents():
             s1 = random.uniform(0, total)
@@ -109,9 +112,10 @@ class graphSolver:
         child1 = path1[:i1] + path2[i2:]
         child2 = path2[:i2] + path1[i1:]
 
-        if random.random() < self.mutation_rate:
+        if random.random() < self.mutation_rate * 1:
             child1 = self.mutate(child1)
-        if random.random() < self.mutation_rate:
+        
+        if random.random() < self.mutation_rate * 1:
             child2 = self.mutate(child2)
 
         return [child1, child2]
@@ -135,10 +139,11 @@ class graphSolver:
 
         for i in range(len(path) - 1):
             if self.G.has_edge(path[i], path[i + 1]):
-                energy += self.G[path[i]][path[i + 1]]['weight'] * 2.0 / 3.0
+                energy += self.G[path[i]][path[i + 1]]['weight']
             else:
                 return -1
 
+        energy *- 2.0/3.0
 
         for h in self.house_names:
             # find the shortest length from h to a node in path and add it to energy
@@ -165,7 +170,7 @@ class graphSolver:
         """
 
         # Normal Distribution Parameters
-        mu = len(self.node_names) / 2
+        mu = len(self.node_names) * 3 / 4
         std_dev = len(self.node_names) / 10
 
         # Generate a list of random nodes to visit
@@ -242,17 +247,39 @@ class graphSolver:
             initial_population.append(self.generate_random_cycle())
         return initial_population
 
+    def solve(self, filename):
+        output_file = '../outputs/' + filename + '.out'
+
+        best_path = None
+        best_score = sys.maxint
+
+        for _ in range(3):
+            result_path = self.run_evolution(10000000)
+            fit = self.fitness(result_path)
+            print(result_path)
+            print(fit)
+            if fit < best_score:
+                best_score = fit
+                best_path = result_path
+
+        best_score = self.fitness(best_path)
+        print(best_score)
+
+        result_dropoff = self.get_pedestrian_walks(best_path)
+        writeOutput(output_file, best_path, result_dropoff)
+
 def main():
 
-    node_names, house_names, start, adj_mat = readInput('../inputs/7_50.in')
+    #node_names, house_names, start, adj_mat = readInput('../inputs/9_50.in')
     #node_names, house_names, start, adj_mat = readInput('../inputs/7_100.in')
     #node_names, house_names, start, adj_mat = readInput('../inputs/7_200.in')
     
 
-    solver = graphSolver(node_names, house_names, start, adj_mat)
+    #solver = graphSolver(node_names, house_names, start, adj_mat)
     #result_path = solver.run_evolution(100)
     #print(result_path)
     
+    '''
     best_path = None
     best_score = 900
 
@@ -266,7 +293,28 @@ def main():
     result_path = best_path
     result_dropoff = solver.get_pedestrian_walks(result_path)
 
-    #writeOutput('../outputs/7_100.out', result_path, result_dropoff)
+    writeOutput('../outputs/9_100.out', result_path, result_dropoff)
+    '''
+
+    filename = '../inputs/1_50.in'
+    node_names, house_names, start, adj_mat = readInput(filename)
+
+    path = ['1', '28', '19', '16', '23', '32', '15', '24', '41', '22', '37', '26', '34', '3', '11', '46', '44', '12', '25', '35', '17', '20', '45', '39', '31', '1']
+    solver = graphSolver(node_names, house_names, start, adj_mat)
+    result_dropoff = solver.get_pedestrian_walks(path)
+    writeOutput('1_50.out', path, result_dropoff)
+    print(solver.fitness(path))
+
+    '''
+    for i in range(1, 8):
+        filename = str(i) + '_50'
+        print(filename)
+        input_file = '../inputs/' + filename + '.in'
+        #input_file = 'small_8.in'
+        node_names, house_names, start, adj_mat = readInput(input_file)
+        solver = graphSolver(node_names, house_names, start, adj_mat)
+        solver.solve(filename)
+    '''
 
     '''
     for row in adj_mat:

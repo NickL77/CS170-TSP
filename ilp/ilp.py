@@ -1,6 +1,6 @@
 from itertools import product
 from sys import stdout as out
-from mip import Model, xsum, minimize, BINARY
+from mip import Model, xsum, minimize, BINARY, OptimizationStatus
 import util
 import networkx as nx
 
@@ -22,10 +22,10 @@ class graphSolver:
                     if i > j:
                         self.G.add_edge(self.node_names[i], self.node_names[j], weight=adj_mat[i][j])
 
-    def solve(self):
+    def solve(self, max_runtime = 120):
 
         n, V = len(self.adj_mat), set(range(len(self.adj_mat)))
-
+        H = set(range(len(self.house_names)))
         model = Model()
 
         """
@@ -40,8 +40,18 @@ class graphSolver:
                 if self.adj_mat[i][j] > 0:
                     d[(i, j)] = model.add_var(var_type=BINARY)
 
+        z = [model.add_var() for i in V]
         y = [model.add_var() for i in V]
-        s = [model.add_var() for i in V]
+
+        # i is node, j is house/pedestrian
+        c = []
+        s = []
+        for i in V:
+            c.append(self.closest_nodes(10, self.node_names[i]))
+            temp_row = []
+            for j in H:
+                temp_row.append(model.add_var(var_type=BINARY))
+            s.append(temp_row)
 
         """
         Define optimization function
@@ -51,33 +61,42 @@ class graphSolver:
             for i in V:
                 for j in V:
                     if self.adj_mat[i][j] > 0:
-                        total += self.adj_mat[i][j] * d[(i,j)]
+                        total += self.adj_mat[i][j] * d[(i,j)] * 2.0 / 3.0
+            for i in V:
+                for j in H:
+                    total += c[i][j] * s[i][j]
             return total
         model.objective = minimize(cost_func())
 
         """
         Add constraints
         """
-        house_set = set(self.house_names)
-        house_set.add(self.start)
-        for i in range(len(self.node_names)):
-            if self.node_names[i] in house_set:
-                model += s[i] == 1
+        model += y[self.node_names.index(self.start)] == 1
+
+        # Will need if skimp on distance calulation with closest_nodes
+        #for i in H:
+        #    model += xsum(s[j][i] * c[j][i] for j in V) >= 0.2
+
+        for i in H:
+            model += xsum(s[j][i] for j in V) == 1
 
         for i in V:
-            model += xsum(d[(i,j)] for j in V -{i} if self.adj_mat[i][j] > 0) == 1 * s[i]
+            for j in H:
+                model += s[i][j] <= y[i]
 
         for i in V:
-            model+= xsum(d[(j,i)] for j in V - {i} if self.adj_mat[i][j] > 0) == 1 * s[i]
+            model += xsum(d[(i,j)] for j in V -{i} if self.adj_mat[i][j] > 0) == 1 * y[i]
+
+        for i in V:
+            model+= xsum(d[(j,i)] for j in V - {i} if self.adj_mat[i][j] > 0) == 1 * y[i]
 
         for (i, j) in product(V - {0}, V - {0}):
             if i != j and self.adj_mat[i][j] > 0:
-                model += y[i] - (n+1)*d[(i,j)] >= y[j] - n
+                model += z[i] - (n+1)*d[(i,j)] >= z[j] - n
 
-        model.optimize(max_seconds = 30)
+        status = model.optimize(max_seconds = max_runtime)
 
         if model.num_solutions:
-
             nc = self.node_names.index(self.start)
             solution = []
             for _ in range(500):
@@ -89,9 +108,10 @@ class graphSolver:
                 if nc == self.node_names.index(self.start):
                     solution.append(self.start)
                     break
-            return solution
+            print(solution)
+            return solution, status, model.gap
         else:
-            return None
+            return None, status, model.gap
 
 
     def fitness(self, path):
@@ -166,20 +186,91 @@ class graphSolver:
                     fringe.update(child, cost)
         return final_cost, goal
 
-def main():
-    for i in range(1, 50):
-        filename = str(i) + '_50'
-        input_file = '../inputs/' + filename + '.in'
-        output_file = '../outputs/' + filename + '.out'
+    def closest_nodes(self, n, node):
+        """
+        Calculates n closest nodes from `node` to offer as items to purchase (pedestrians
+        walking home)
 
-        node_names, house_names, start_node, adj_mat = util.readInput(input_file)
-        solver = graphSolver(node_names, house_names, start_node, adj_mat)
-        path = solver.solve()
-        if path and solver.fitness(path) > 0:
-            dropoff = solver.get_pedestrian_walks(path)
-            util.writeOutput(output_file, path, dropoff)
-        else:
-            print('FAILED: ' + input_file)
+        Parameters
+        ----------
+        n: num closest nodes to find
+        node: the house of a TA
+
+        Return
+        ------
+        closest: list of n closest nodes
+        """
+        visited = set()
+        fringe = util.PriorityQueue()
+        #goal = None
+        fringe.push(node, 0)
+        #foundPath = False
+        #final_cost = float('inf')
+        #while not foundPath:
+        closest_nodes = {}
+        #while len(closest_nodes) < n:
+        while not fringe.isEmpty():
+            if fringe.isEmpty():
+                return None
+            curr_node, final_cost = fringe.pop()
+            #if curr_node in path:
+            #    goal = curr_node
+            #    foundPath = True
+            #elif curr_node not in visited:
+            if curr_node not in visited:
+                closest_nodes[curr_node] = final_cost
+                visited.add(curr_node)
+                for child in list(self.G.neighbors(curr_node)):
+                    cost = final_cost + self.G[curr_node][child]['weight']
+                    fringe.update(child, cost)
+
+        available_dropoffs = []
+        for n in self.house_names:
+            if n in closest_nodes:
+                available_dropoffs.append(closest_nodes[n])
+            else:
+                print('phat L')
+                available_dropoffs.append(-1)
+        return available_dropoffs
+
+def main():
+
+    for i in range(11, 366):
+        try:
+
+            filename = str(i) + '_100'
+            input_file = '../inputs/' + filename + '.in'
+            output_file = '../outputs/optimal/' + filename + '.out'
+
+            print('Solving: ', filename)
+
+            node_names, house_names, start_node, adj_mat = util.readInput(input_file)
+            solver = graphSolver(node_names, house_names, start_node, adj_mat)
+
+            path, status, gap = solver.solve(300)
+            if gap > 100:
+                continue
+            gap = int(gap * 100)
+
+            if path and solver.fitness(path) > 0:
+                dropoff = solver.get_pedestrian_walks(path)
+                if status == OptimizationStatus.OPTIMAL:
+                    util.writeOutput(output_file, path, dropoff)
+                else:
+                    suboptimal_output_file = '../outputs/suboptimal/' + filename + '_gap_' + str(gap) + '.out'
+                    util.writeOutput(suboptimal_output_file, path, dropoff)
+            else:
+                print('FAILED: ' + input_file)
+        except (ValueError, FileNotFoundError, IndexError, nx.NetworkXError) as e:
+            print('FAILED', e)
+    '''
+    input_file = '../inputs/7_50.in'
+    node_names, house_names, start_node, adj_mat = util.readInput(input_file)
+    solver = graphSolver(node_names, house_names, start_node, adj_mat)
+    print(solver.closest_nodes(10, '1'))
+    '''
+
+
 
 
 if __name__  == "__main__":
