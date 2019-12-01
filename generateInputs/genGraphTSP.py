@@ -64,11 +64,10 @@ if __name__ == "__main__":
 
     # create a weighted, directed graph in networkx
     graph = nx.from_numpy_matrix(adj_mat, create_using=nx.DiGraph())
-
     #print(nx.adjacency_matrix(graph).todense())
     
-    #nx.draw(graph)
-    #plt.show()
+    # nx.draw(graph)
+    # plt.show()
 
     # Initialize data for solver
     data = {}

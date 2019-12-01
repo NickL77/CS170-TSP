@@ -14,8 +14,18 @@ def check_sym(adj):
             assert adj[i][j] == adj[j][i]
     print("Adjacency matrix is symmetric")
 
-def gen_adj_matrix(V, D, S):
+def check_triangle(adj): 
+    matrix = np.matrix(adj)
+    G = nx.from_numpy_matrix(matrix) 
+    shortest = dict(nx.floyd_warshall(G))
+    for u, v, datadict in G.edges(data=True):
+        val = datadict['weight']
+        if not isinstance(val, str) and abs(shortest[u][v] - datadict['weight']) >= 0.00001:
+            assert False
+    print("Adjacency matrix satisfies triangle inequality")
 
+
+def gen_adj_matrix(V, D, S):
     positions = np.random.rand(V, D)
     differences = positions[:, None, :] - positions[None, :, :]
     distances = np.sqrt(np.sum(differences**2, axis=-1)) # euclidean
@@ -37,7 +47,7 @@ def truncate(n, d):
 
 if __name__ == "__main__":
     
-    V = 200 # number of nodes
+    V = 100 # number of nodes
     D = 2 # dimensionality
     S = 0.6 # sparsity
     num_TAs = 94 # number of houses to visit
@@ -60,6 +70,7 @@ if __name__ == "__main__":
     
     adj_mat = gen_adj_matrix(V, D, S)
     check_sym(adj_mat)
+    check_triangle(adj_mat) 
    
 
     # *********************
