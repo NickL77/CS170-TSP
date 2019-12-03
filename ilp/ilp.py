@@ -3,6 +3,7 @@ from sys import stdout as out
 from mip import Model, xsum, minimize, BINARY, OptimizationStatus
 import util
 import networkx as nx
+import copy
 
 class graphSolver:
 
@@ -22,6 +23,8 @@ class graphSolver:
                     if i > j:
                         self.G.add_edge(self.node_names[i], self.node_names[j], weight=adj_mat[i][j])
 
+        self.full_mat, self.implicit_edge_map = self.make_complete_graph();
+
     def solve(self, max_runtime = 120):
 
         n, V = len(self.adj_mat), set(range(len(self.adj_mat)))
@@ -37,11 +40,12 @@ class graphSolver:
         d = {}
         for i in V:
             for j in V:
-                if self.adj_mat[i][j] > 0:
+                #if self.adj_mat[i][j] > 0:
+                if self.full_mat[i][j] > 0:
                     d[(i, j)] = model.add_var(var_type=BINARY)
 
         z = [model.add_var() for i in V]
-        y = [model.add_var() for i in V]
+        y = [model.add_var(var_type=BINARY) for i in V]
 
         # i is node, j is house/pedestrian
         c = []
@@ -60,8 +64,8 @@ class graphSolver:
             total = 0
             for i in V:
                 for j in V:
-                    if self.adj_mat[i][j] > 0:
-                        total += self.adj_mat[i][j] * d[(i,j)] * 2.0 / 3.0
+                    if self.full_mat[i][j] > 0:
+                        total += self.full_mat[i][j] * d[(i,j)] * 2.0 / 3.0
             for i in V:
                 for j in H:
                     total += c[i][j] * s[i][j]
@@ -85,13 +89,13 @@ class graphSolver:
                 model += s[i][j] <= y[i]
 
         for i in V:
-            model += xsum(d[(i,j)] for j in V -{i} if self.adj_mat[i][j] > 0) == 1 * y[i]
+            model += xsum(d[(i,j)] for j in V -{i} if self.full_mat[i][j] > 0) == 1 * y[i]
 
         for i in V:
-            model+= xsum(d[(j,i)] for j in V - {i} if self.adj_mat[i][j] > 0) == 1 * y[i]
+            model+= xsum(d[(j,i)] for j in V - {i} if self.full_mat[i][j] > 0) == 1 * y[i]
 
         for (i, j) in product(V - {0}, V - {0}):
-            if i != j and self.adj_mat[i][j] > 0:
+            if i != j and self.full_mat[i][j] > 0:
                 model += z[i] - (n+1)*d[(i,j)] >= z[j] - n
 
         status = model.optimize(max_seconds = max_runtime)
@@ -108,10 +112,35 @@ class graphSolver:
                 if nc == self.node_names.index(self.start):
                     solution.append(self.start)
                     break
+            solution = self.make_valid_path(solution)
             print(solution)
             return solution, status, model.gap
         else:
             return None, status, model.gap
+
+    def make_complete_graph(self):
+
+        full_mat = copy.deepcopy(self.adj_mat)
+        implicit_edge_map = {}
+
+        for i in range(len(full_mat)):
+            for j in range(len(full_mat)):
+                if full_mat[i][j] == -1 and i != j:
+                    source = self.node_names[i]
+                    target = self.node_names[j]
+                    weight, shortest_path = nx.single_source_dijkstra(self.G, source=source, target=target)
+                    full_mat[i][j] = weight
+                    implicit_edge_map[(source, target)] = shortest_path
+        return full_mat, implicit_edge_map
+
+    def make_valid_path(self, path):
+        valid_path = []
+        for i in range(len(path) - 1):
+            source = path[i]
+            target = path[i+1]
+            valid_path.extend(self.implicit_edge_map.get((source, target), [source, target])[:-1])
+        valid_path.append(path[-1])
+        return valid_path
 
 
     def fitness(self, path):
@@ -202,21 +231,12 @@ class graphSolver:
         """
         visited = set()
         fringe = util.PriorityQueue()
-        #goal = None
         fringe.push(node, 0)
-        #foundPath = False
-        #final_cost = float('inf')
-        #while not foundPath:
         closest_nodes = {}
-        #while len(closest_nodes) < n:
         while not fringe.isEmpty():
             if fringe.isEmpty():
                 return None
             curr_node, final_cost = fringe.pop()
-            #if curr_node in path:
-            #    goal = curr_node
-            #    foundPath = True
-            #elif curr_node not in visited:
             if curr_node not in visited:
                 closest_nodes[curr_node] = final_cost
                 visited.add(curr_node)
@@ -235,21 +255,19 @@ class graphSolver:
 
 def main():
 
-    #200: 90
-    #100: 95
-    for i in range(90, 366):
+    for i in range(1, 366):
         try:
-
             filename = str(i) + '_100'
             input_file = '../inputs/' + filename + '.in'
-            output_file = '../outputs/optimal/' + filename + '.out'
+            #output_file = '../outputs/optimal/' + filename + '.out'
+            output_file = '../outputs/100test_new/' + filename + '.out'
 
             print('Solving: ', filename)
 
             node_names, house_names, start_node, adj_mat = util.readInput(input_file)
             solver = graphSolver(node_names, house_names, start_node, adj_mat)
 
-            path, status, gap = solver.solve(600)
+            path, status, gap = solver.solve(120)
             if gap > 100:
                 continue
             gap = int(gap * 100)
@@ -259,7 +277,8 @@ def main():
                 if status == OptimizationStatus.OPTIMAL:
                     util.writeOutput(output_file, path, dropoff)
                 else:
-                    suboptimal_output_file = '../outputs/suboptimal/' + filename + '_gap_' + str(gap) + '.out'
+                    #suboptimal_output_file = '../outputs/suboptimal/' + filename + '_gap_' + str(gap) + '.out'
+                    suboptimal_output_file = output_file
                     util.writeOutput(suboptimal_output_file, path, dropoff)
             else:
                 print('FAILED: ' + input_file)

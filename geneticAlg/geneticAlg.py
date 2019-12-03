@@ -254,7 +254,7 @@ class graphSolver:
         best_score = sys.maxint
 
         for _ in range(3):
-            result_path = self.run_evolution(10000000)
+            result_path = self.run_evolution(30)
             fit = self.fitness(result_path)
             print(result_path)
             print(fit)
@@ -295,7 +295,7 @@ def main():
 
     writeOutput('../outputs/9_100.out', result_path, result_dropoff)
     '''
-
+    '''
     filename = '../inputs/1_50.in'
     node_names, house_names, start, adj_mat = readInput(filename)
 
@@ -304,9 +304,9 @@ def main():
     result_dropoff = solver.get_pedestrian_walks(path)
     writeOutput('1_50.out', path, result_dropoff)
     print(solver.fitness(path))
-
     '''
-    for i in range(1, 8):
+
+    for i in range(50, 51):
         filename = str(i) + '_50'
         print(filename)
         input_file = '../inputs/' + filename + '.in'
@@ -314,7 +314,6 @@ def main():
         node_names, house_names, start, adj_mat = readInput(input_file)
         solver = graphSolver(node_names, house_names, start, adj_mat)
         solver.solve(filename)
-    '''
 
     '''
     for row in adj_mat:
