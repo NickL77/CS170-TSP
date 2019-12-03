@@ -235,7 +235,9 @@ class graphSolver:
 
 def main():
 
-    for i in range(11, 366):
+    #200: 90
+    #100: 95
+    for i in range(90, 366):
         try:
 
             filename = str(i) + '_100'
@@ -247,7 +249,7 @@ def main():
             node_names, house_names, start_node, adj_mat = util.readInput(input_file)
             solver = graphSolver(node_names, house_names, start_node, adj_mat)
 
-            path, status, gap = solver.solve(300)
+            path, status, gap = solver.solve(600)
             if gap > 100:
                 continue
             gap = int(gap * 100)
