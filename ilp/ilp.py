@@ -255,9 +255,18 @@ class graphSolver:
 
 def main():
 
-    for i in range(1, 366):
+    #100: 89
+    #200: 60
+
+    log_file = 'log.log'
+
+    for i in range(60, 366):
         try:
+<<<<<<< Updated upstream
             filename = str(i) + '_50'
+=======
+            filename = str(i) + '_200'
+>>>>>>> Stashed changes
             input_file = '../inputs/' + filename + '.in'
             output_file = '../outputs/optimal/' + filename + '.out'
 
@@ -266,7 +275,7 @@ def main():
             node_names, house_names, start_node, adj_mat = util.readInput(input_file)
             solver = graphSolver(node_names, house_names, start_node, adj_mat)
 
-            path, status, gap = solver.solve(120)
+            path, status, gap = solver.solve(600)
             if gap > 100:
                 continue
             gap = int(gap * 100)
@@ -281,6 +290,9 @@ def main():
             else:
                 print('FAILED: ' + input_file)
         except (ValueError, FileNotFoundError, IndexError, nx.NetworkXError) as e:
+            f = open(log_file, 'a+')
+            f.write(filename + ': ' + str(e) + '\n')
+            f.close()
             print('FAILED', e)
     '''
     input_file = '../inputs/7_50.in'
@@ -288,9 +300,6 @@ def main():
     solver = graphSolver(node_names, house_names, start_node, adj_mat)
     print(solver.closest_nodes(10, '1'))
     '''
-
-
-
 
 if __name__  == "__main__":
     main()
