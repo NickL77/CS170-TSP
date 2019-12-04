@@ -262,19 +262,8 @@ def main():
 
     for i in range(60, 366):
         try:
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-            filename = str(i) + '_50'
-=======
             filename = str(i) + '_200'
->>>>>>> Stashed changes
-=======
-            filename = str(i) + '_200'
->>>>>>> Stashed changes
-=======
-            filename = str(i) + '_200'
->>>>>>> Stashed changes
+
             input_file = '../inputs/' + filename + '.in'
             output_file = '../outputs/optimal/' + filename + '.out'
 
