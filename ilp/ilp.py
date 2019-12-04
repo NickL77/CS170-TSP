@@ -264,7 +264,7 @@ def main():
 
     log_file = 'log.log'
 
-    for i in range(1, 366):
+    for i in range(366, 0, -1):
         try:
             filename = str(i) + '_100'
             input_file = '../inputs/' + filename + '.in'
@@ -279,7 +279,7 @@ def main():
             node_names, house_names, start_node, adj_mat = util.readInput(input_file)
             solver = graphSolver(node_names, house_names, start_node, adj_mat)
 
-            path, status, gap = solver.solve(300)
+            path, status, gap = solver.solve(600)
             if gap > 100:
                 continue
             gap = int(gap * 100)
