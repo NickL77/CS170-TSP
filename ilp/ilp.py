@@ -1,9 +1,11 @@
 from itertools import product
 from sys import stdout as out
 from mip import Model, xsum, minimize, BINARY, OptimizationStatus
+import student_utils
 import util
 import networkx as nx
 import copy
+import os
 
 class graphSolver:
 
@@ -255,24 +257,29 @@ class graphSolver:
 
 def main():
 
-    #100: 89
-    #200: 60
+    #100: 96
+    #200: 64
+
+    solved = get_solve_status()
 
     log_file = 'log.log'
 
-    for i in range(60, 366):
+    for i in range(1, 366):
         try:
-            filename = str(i) + '_200'
-
+            filename = str(i) + '_100'
             input_file = '../inputs/' + filename + '.in'
             output_file = '../outputs/optimal/' + filename + '.out'
+
+            if filename in solved:
+                print('Solved: ', filename, "with gap ", solved[filename])
+                continue
 
             print('Solving: ', filename)
 
             node_names, house_names, start_node, adj_mat = util.readInput(input_file)
             solver = graphSolver(node_names, house_names, start_node, adj_mat)
 
-            path, status, gap = solver.solve(600)
+            path, status, gap = solver.solve(300)
             if gap > 100:
                 continue
             gap = int(gap * 100)
@@ -291,12 +298,58 @@ def main():
             f.write(filename + ': ' + str(e) + '\n')
             f.close()
             print('FAILED', e)
-    '''
-    input_file = '../inputs/7_50.in'
-    node_names, house_names, start_node, adj_mat = util.readInput(input_file)
-    solver = graphSolver(node_names, house_names, start_node, adj_mat)
-    print(solver.closest_nodes(10, '1'))
-    '''
+
+def get_solve_status():
+
+    input_dir = '../inputs/'
+    output_dir = '../outputs/'
+    optimal_dir = output_dir + 'optimal/'
+    suboptimal_dir = output_dir + 'suboptimal/'
+
+    d = {}
+    optimal_solutions = {}
+    suboptimal_solutions = {}
+
+    for f in os.listdir(optimal_dir):
+        optimal_solutions[f.strip('.out')] = f
+
+    for f in os.listdir(suboptimal_dir):
+        temp = 0
+        for i in range(len(f)):
+            if f[i] == '_':
+                if temp == 1:
+                    suboptimal_solutions[f[:i]] = f
+                    break
+                temp += 1
+    for f in os.listdir(input_dir):
+        problem = f.strip('.in')
+        #if problem not in optimal_solutions and problem not in suboptimal_solutions:
+        #    d[problem] = ['Unsolved', -1.0, -1.0]
+        if problem in optimal_solutions or problem in suboptimal_solutions:
+            #nodes, houses, start, adj_mat = util.readInput(input_dir + f)
+            #solver = graphSolver(nodes, houses, start, adj_mat)
+            if problem in optimal_solutions:
+                '''
+                output_file = open(optimal_dir + optimal_solutions[problem], 'r')
+                path = output_file.readline().strip().split(' ')
+                output_file.close()
+                d[problem] = ['Optimal', solver.fitness(path), 0.0]
+                '''
+                d[problem] = -1
+            elif problem in suboptimal_solutions:
+                output_file = open(suboptimal_dir + suboptimal_solutions[problem], 'r')
+                path = output_file.readline().strip().split(' ')
+                output_file.close()
+                gap = ''
+                for l in suboptimal_solutions[problem].strip('.out')[::-1]:
+                    if l == '_':
+                        break
+                    gap += l
+                gap = float(gap[::-1])
+                #d[problem] = ['Suboptimal', solver.fitness(path), gap]
+                d[problem] = gap
+    return d
+
 
 if __name__  == "__main__":
     main()

@@ -1,4 +1,5 @@
 import heapq
+import student_utils
 
 #adapted from CS188 project
 
@@ -40,6 +41,12 @@ class PriorityQueue:
         else:
             self.push(item, priority)
 
+def read_file(file):
+    with open(file, 'r') as f:
+        data = f.readlines()
+    data = [line.replace("Â", " ").strip().split() for line in data]
+    return data
+
 
 def readInput(filename):
     """
@@ -57,6 +64,7 @@ def readInput(filename):
     adj_mat:        adjacency matrix
     """
 
+    '''
     f = open(filename, 'r')
 
     num_nodes = int(f.readline().strip())
@@ -73,6 +81,11 @@ def readInput(filename):
     f.close()
 
     return node_names, house_names, start_node, adj_mat
+    '''
+
+    _, _, node_names, house_names, start, adj_mat = student_utils.data_parser(read_file(filename))
+    return node_names, house_names, start, adj_mat
+
 
 def writeOutput(filename, path, dropoff):
     f = open(filename, 'w')
@@ -92,3 +105,4 @@ def writeOutput(filename, path, dropoff):
             if i + 1 < len(dropoff[k]):
                 f.write(' ')
         f.write('\n')
+
