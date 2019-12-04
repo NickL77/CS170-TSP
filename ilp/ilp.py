@@ -257,10 +257,9 @@ def main():
 
     for i in range(1, 366):
         try:
-            filename = str(i) + '_100'
+            filename = str(i) + '_50'
             input_file = '../inputs/' + filename + '.in'
-            #output_file = '../outputs/optimal/' + filename + '.out'
-            output_file = '../outputs/100test_new/' + filename + '.out'
+            output_file = '../outputs/optimal/' + filename + '.out'
 
             print('Solving: ', filename)
 
@@ -277,8 +276,7 @@ def main():
                 if status == OptimizationStatus.OPTIMAL:
                     util.writeOutput(output_file, path, dropoff)
                 else:
-                    #suboptimal_output_file = '../outputs/suboptimal/' + filename + '_gap_' + str(gap) + '.out'
-                    suboptimal_output_file = output_file
+                    suboptimal_output_file = '../outputs/suboptimal/' + filename + '_gap_' + str(gap) + '.out'
                     util.writeOutput(suboptimal_output_file, path, dropoff)
             else:
                 print('FAILED: ' + input_file)
