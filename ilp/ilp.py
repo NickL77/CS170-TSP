@@ -301,7 +301,6 @@ def main():
     for k in sorted(suboptimal.keys(), reverse=True):
         for filename in suboptimal[k]:
             try:
-                #filename = str(i) + '_200'
                 input_file = '../inputs/' + filename + '.in'
                 output_file = '../outputs/optimal/' + filename + '.out'
 
@@ -310,7 +309,7 @@ def main():
                 node_names, house_names, start_node, adj_mat = util.readInput(input_file)
                 solver = graphSolver(node_names, house_names, start_node, adj_mat)
 
-                path, status, gap = solver.solve(600)
+                path, status, gap = solver.solve(10)
                 if gap > 100:
                     continue
                 gap = int(gap * 100)
