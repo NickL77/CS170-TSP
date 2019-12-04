@@ -257,22 +257,19 @@ class graphSolver:
 
 def main():
 
-    #100: 96
-    #200: 64
-
-    solved = get_solve_status()
+    solved, suboptimal = get_solve_status()
 
     log_file = 'log.log'
 
     for i in range(366, 0, -1):
         try:
-            filename = str(i) + '_100'
+            filename = str(i) + '_200'
             input_file = '../inputs/' + filename + '.in'
             output_file = '../outputs/optimal/' + filename + '.out'
 
             if filename in solved:
-                print('Solved: ', filename, "with gap ", solved[filename])
-                continue
+                    print('Solved: ', filename, "with gap ", solved[filename])
+                    continue
 
             print('Solving: ', filename)
 
@@ -298,6 +295,40 @@ def main():
             f.write(filename + ': ' + str(e) + '\n')
             f.close()
             print('FAILED', e)
+    '''
+
+    for k in sorted(suboptimal.keys(), reverse=True):
+        for filename in suboptimal[k]:
+            try:
+                input_file = '../inputs/' + filename + '.in'
+                output_file = '../outputs/optimal/' + filename + '.out'
+
+                print('Solving: ', filename)
+
+                node_names, house_names, start_node, adj_mat = util.readInput(input_file)
+                solver = graphSolver(node_names, house_names, start_node, adj_mat)
+
+                path, status, gap = solver.solve(10)
+                if gap > 100:
+                    continue
+                gap = int(gap * 100)
+
+                if path and solver.fitness(path) > 0:
+                    dropoff = solver.get_pedestrian_walks(path)
+                    if status == OptimizationStatus.OPTIMAL:
+                        util.writeOutput(output_file, path, dropoff)
+                    else:
+                        suboptimal_output_file = '../outputs/suboptimal/' + filename + '_gap_' + str(gap) + '.out'
+                        util.writeOutput(suboptimal_output_file, path, dropoff)
+                else:
+                    print('FAILED: ' + input_file)
+            except (ValueError, FileNotFoundError, IndexError, nx.NetworkXError) as e:
+                f = open(log_file, 'a+')
+                f.write(filename + ': ' + str(e) + '\n')
+                f.close()
+                print('FAILED', e)
+
+        '''
 
 def get_solve_status():
 
@@ -307,6 +338,7 @@ def get_solve_status():
     suboptimal_dir = output_dir + 'suboptimal/'
 
     d = {}
+    sub = {}
     optimal_solutions = {}
     suboptimal_solutions = {}
 
@@ -348,7 +380,8 @@ def get_solve_status():
                 gap = float(gap[::-1])
                 #d[problem] = ['Suboptimal', solver.fitness(path), gap]
                 d[problem] = gap
-    return d
+                sub[gap] = sub.get(gap, []) + [problem]
+    return d, sub
 
 
 if __name__  == "__main__":
