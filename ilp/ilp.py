@@ -261,11 +261,16 @@ def main():
 
     log_file = 'log.log'
     
+    '''
     for i in range(366, 0, -1):
         try:
             filename = str(i) + '_200'
             input_file = '../inputs/' + filename + '.in'
             output_file = '../outputs/optimal/' + filename + '.out'
+            
+            if filename in solved:
+                    print('Solved: ', filename, "with gap ", solved[filename])
+                    continue
 
             print('Solving: ', filename)
 
@@ -300,10 +305,6 @@ def main():
                 input_file = '../inputs/' + filename + '.in'
                 output_file = '../outputs/optimal/' + filename + '.out'
 
-                if filename in solved:
-                    print('Solved: ', filename, "with gap ", solved[filename])
-                    continue
-
                 print('Solving: ', filename)
 
                 node_names, house_names, start_node, adj_mat = util.readInput(input_file)
@@ -328,7 +329,6 @@ def main():
                 f.write(filename + ': ' + str(e) + '\n')
                 f.close()
                 print('FAILED', e)
-    '''
 
 def get_solve_status():
 
