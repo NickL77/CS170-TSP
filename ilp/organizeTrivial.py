@@ -30,6 +30,7 @@ def get_score_status():
 
     for f in os.listdir(input_dir):
         problem = f.strip('.in')
+        print(problem)
         if problem not in optimal_solutions and problem not in suboptimal_solutions:
             d[problem] = ['Unsolved', -1.0, -1.0]
         else:
@@ -43,7 +44,7 @@ def get_score_status():
 
                 curr_cost = solver.fitness(path)
                 trivial_cost = solver.fitness(path[:1])
-                score = (trivial_cost/curr_cost)*100
+                score = (curr_cost/trivial_cost)*100
                 if not scores.get(score, False):
                     scores[score] = [problem]
                 else:
@@ -63,13 +64,16 @@ def get_score_status():
 
                 curr_cost = solver.fitness(path)
                 trivial_cost = solver.fitness(path[:1])
-                score = (trivial_cost/curr_cost)*100
+                score = (curr_cost/trivial_cost)*100
                 if not scores.get(score, False):
                     scores[score] = [problem]
                 else:
                     scores[score].append(problem)
     return scores
 
+d = get_score_status()
+for i in sorted(d):
+    print(i, d[i])
 '''
 f = open('progress.csv', 'w')
 progress_file = csv.writer(f, delimiter = ',')
