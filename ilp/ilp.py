@@ -261,7 +261,7 @@ def main():
 
     log_file = 'log.log'
 
-    for i in range(366, 0, -1):
+    for i in range(1, 366, 1):
         try:
             filename = str(i) + '_200'
             input_file = '../inputs/' + filename + '.in'
