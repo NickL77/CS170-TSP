@@ -6,6 +6,7 @@ import util
 import networkx as nx
 import copy
 import os
+import random
 
 class graphSolver:
 
@@ -261,7 +262,7 @@ def main():
 
     log_file = 'log.log'
     '''
-    for i in range(366, 0, -1):
+    for i in range(1, 367):
         try:
             filename = str(i) + '_200'
             input_file = '../inputs/' + filename + '.in'
@@ -276,7 +277,7 @@ def main():
             node_names, house_names, start_node, adj_mat = util.readInput(input_file)
             solver = graphSolver(node_names, house_names, start_node, adj_mat)
 
-            path, status, gap = solver.solve(600)
+            path, status, gap = solver.solve(1200)
             if gap > 100:
                 continue
             gap = int(gap * 100)
@@ -296,8 +297,9 @@ def main():
             f.close()
             print('FAILED', e)
     '''
-
-    for k in sorted(suboptimal.keys(), reverse=True):
+    keys = [k for k in suboptimal.keys()]
+    random.shuffle(keys)
+    for k in keys:
         for filename in suboptimal[k]:
             try:
                 input_file = '../inputs/' + filename + '.in'
@@ -327,7 +329,6 @@ def main():
                 f.write(filename + ': ' + str(e) + '\n')
                 f.close()
                 print('FAILED', e)
-
 
 def get_solve_status():
 
