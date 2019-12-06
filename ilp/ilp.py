@@ -263,7 +263,7 @@ def main():
     '''
     for i in range(366, 0, -1):
         try:
-            filename = str(i) + '_100'
+            filename = str(i) + '_200'
             input_file = '../inputs/' + filename + '.in'
             output_file = '../outputs/optimal/' + filename + '.out'
 
