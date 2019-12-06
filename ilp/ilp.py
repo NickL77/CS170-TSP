@@ -32,7 +32,7 @@ class graphSolver:
         n, V = len(self.adj_mat), set(range(len(self.adj_mat)))
         H = set(range(len(self.house_names)))
         model = Model()
-
+        model.threads = -1
         """
         Define Parameters
         d: {0, 1} whether or not an edge is selected
@@ -260,10 +260,10 @@ def main():
     solved, suboptimal = get_solve_status()
 
     log_file = 'log.log'
-
-    for i in range(1, 366, 1):
+    '''
+    for i in range(366, 0, -1):
         try:
-            filename = str(i) + '_200'
+            filename = str(i) + '_100'
             input_file = '../inputs/' + filename + '.in'
             output_file = '../outputs/optimal/' + filename + '.out'
 
@@ -308,7 +308,7 @@ def main():
                 node_names, house_names, start_node, adj_mat = util.readInput(input_file)
                 solver = graphSolver(node_names, house_names, start_node, adj_mat)
 
-                path, status, gap = solver.solve(10)
+                path, status, gap = solver.solve(1200)
                 if gap > 100:
                     continue
                 gap = int(gap * 100)
@@ -328,7 +328,6 @@ def main():
                 f.close()
                 print('FAILED', e)
 
-        '''
 
 def get_solve_status():
 
