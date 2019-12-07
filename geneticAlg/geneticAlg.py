@@ -306,8 +306,9 @@ def main():
     print(solver.fitness(path))
     '''
 
-    for i in range(50, 51):
+    for i in range(0, 1):
         filename = str(i) + '_50'
+        filename = '126_50'
         print(filename)
         input_file = '../inputs/' + filename + '.in'
         #input_file = 'small_8.in'

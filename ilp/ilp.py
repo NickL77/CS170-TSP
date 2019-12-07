@@ -289,21 +289,23 @@ def main():
     solved, suboptimal = get_solve_status()
 
     log_file = 'log.log'
-    for i in range(1, 367):
+    for i in range(0, 1):
         try:
             filename = str(i) + '_200'
+            filename = '299_50'
             input_file = '../inputs/' + filename + '.in'
             output_file = '../outputs/optimal/' + filename + '.out'
-            
+            '''
             if filename in solved:
                     print('Solved: ', filename, "with gap ", solved[filename])
                     continue
+            '''
             print('Solving: ', filename)
 
             node_names, house_names, start_node, adj_mat = util.readInput(input_file)
             solver = graphSolver(node_names, house_names, start_node, adj_mat)
 
-            path, status, gap = solver.solve(1200)
+            path, status, gap = solver.solve(1800)
             if gap > 100:
                 continue
             gap = int(gap * 100)
