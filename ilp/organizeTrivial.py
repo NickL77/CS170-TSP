@@ -2,6 +2,7 @@ import os
 import ilp
 import util
 import csv
+import student_utils
 
 def get_score_status():
 
@@ -30,25 +31,32 @@ def get_score_status():
 
     for f in os.listdir(input_dir):
         problem = f.strip('.in')
-        print(problem)
         if problem not in optimal_solutions and problem not in suboptimal_solutions:
             d[problem] = ['Unsolved', -1.0, -1.0]
+
         else:
             nodes, houses, start, adj_mat = util.readInput(input_dir + f)
-            solver = ilp.graphSolver(nodes, houses, start, adj_mat)
+            trivial_dropoff = {}
+            trivial_path = [start]
+            trivial_dropoff[start] = houses
+            solver = ilp.graphSolver(nodes, houses, start, adj_mat, False)
             if problem in optimal_solutions:
                 output_file = open(optimal_dir + optimal_solutions[problem], 'r')
                 path = output_file.readline().strip().split(' ')
                 output_file.close()
-                d[problem] = ['Optimal', solver.fitness(path), 0.0]
-
-                curr_cost = solver.fitness(path)
-                trivial_cost = solver.fitness(path[:1])
+                #curr_cost = solver.fitness(path)
+                curr_cost = student_utils.cost_of_solution(solver.G, path, solver.get_pedestrian_walks(path))
+                if (curr_cost[0] == 'infinite'):
+                    print(problem, 'infinite')
+                    continue
+                curr_cost = float(curr_cost[0])
+                trivial_cost = student_utils.cost_of_solution(solver.G, trivial_path, trivial_dropoff)
+                trivial_cost = float(trivial_cost[0])
                 score = (curr_cost/trivial_cost)*100
                 if not scores.get(score, False):
-                    scores[score] = [problem]
+                    scores[score] = [(problem, curr_cost)]
                 else:
-                    scores[score].append(problem)
+                    scores[score].append((problem, curr_cost))
 
             elif problem in suboptimal_solutions:
                 output_file = open(suboptimal_dir + suboptimal_solutions[problem], 'r')
@@ -60,15 +68,20 @@ def get_score_status():
                         break
                     gap += l
                 gap = float(gap[::-1])
-                d[problem] = ['Suboptimal', solver.fitness(path), gap]
-
-                curr_cost = solver.fitness(path)
-                trivial_cost = solver.fitness(path[:1])
+                #curr_cost = solver.fitness(path)
+                curr_cost = student_utils.cost_of_solution(solver.G, path, solver.get_pedestrian_walks(path))
+                if (curr_cost[0] == 'infinite'):
+                    print(problem, 'infinite')
+                    continue
+                curr_cost = float(curr_cost[0])
+                trivial_cost = student_utils.cost_of_solution(solver.G, trivial_path, trivial_dropoff)
+                trivial_cost = float(trivial_cost[0])
                 score = (curr_cost/trivial_cost)*100
                 if not scores.get(score, False):
-                    scores[score] = [problem]
+                    scores[score] = [(problem, curr_cost)]
                 else:
-                    scores[score].append(problem)
+                    scores[score].append((problem, curr_cost))
+        print(problem, score, curr_cost)
     return scores
 
 d = get_score_status()
