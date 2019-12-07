@@ -10,7 +10,7 @@ import random
 
 class graphSolver:
 
-    def __init__(self, node_names, house_names, start, adj_mat):
+    def __init__(self, node_names, house_names, start, adj_mat, solving=True):
         self.node_names = node_names
         self.house_names = house_names
         self.start = start
@@ -26,7 +26,8 @@ class graphSolver:
                     if i > j:
                         self.G.add_edge(self.node_names[i], self.node_names[j], weight=adj_mat[i][j])
 
-        self.full_mat, self.implicit_edge_map = self.make_complete_graph();
+        if solving:
+            self.full_mat, self.implicit_edge_map = self.make_complete_graph();
 
     def solve(self, max_runtime = 120):
 
@@ -103,15 +104,42 @@ class graphSolver:
 
         status = model.optimize(max_seconds = max_runtime)
 
+        n = 0
+        for i in V:
+            for j in V:
+                if i != j and d[(i, j)].x > 0.99:
+                    n += 1
+        print('oofus doofus', n)
+
         if model.num_solutions:
             nc = self.node_names.index(self.start)
             solution = []
+            # visited is to make sure we don't terminate the path too quickly
+            visited = {}
             for _ in range(500):
                 solution.append(self.node_names[nc])
+                visited[nc] = len(visited)
+                all_visited = True
+                
+                #nc_ls = []
+                print('abcdefgh')
                 for i in V:
                     if (nc, i) in d and d[(nc, i)].x > 0.99:
                         nc = i
-                        break
+                        if nc not in visited:
+                            print('BROKE')
+                            all_visited = False
+                            break
+                        #nc_ls.append(i)
+                        #break
+
+                if all_visited:
+                    first_visit = len(visited)
+                    for k in visited:
+                        if visited[k] < first_visit:
+                            first_visit = visited[k]
+                            nc = k
+
                 if nc == self.node_names.index(self.start):
                     solution.append(self.start)
                     break
@@ -261,17 +289,15 @@ def main():
     solved, suboptimal = get_solve_status()
 
     log_file = 'log.log'
-    '''
     for i in range(1, 367):
         try:
             filename = str(i) + '_200'
             input_file = '../inputs/' + filename + '.in'
             output_file = '../outputs/optimal/' + filename + '.out'
-
+            
             if filename in solved:
                     print('Solved: ', filename, "with gap ", solved[filename])
                     continue
-
             print('Solving: ', filename)
 
             node_names, house_names, start_node, adj_mat = util.readInput(input_file)
@@ -329,6 +355,7 @@ def main():
                 f.write(filename + ': ' + str(e) + '\n')
                 f.close()
                 print('FAILED', e)
+    '''
 
 def get_solve_status():
 
